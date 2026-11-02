@@ -8,6 +8,7 @@ import numpy as np  # noqa: E402
 from matplotlib.patches import Circle, FancyBboxPatch, Wedge  # noqa: E402
 
 from .analisis import punto, tendencia_txt  # noqa: E402
+from .pagina import horas_txt  # noqa: E402
 
 BG = "#0f172a"; CARD = "#1e293b"; TXT = "#e2e8f0"; MUTED = "#94a3b8"
 GREEN = "#22c55e"; YEL = "#eab308"; RED = "#ef4444"; BLUE = "#38bdf8"; ORG = "#f97316"; GRAY = "#64748b"; PUR = "#a78bfa"
@@ -65,7 +66,7 @@ def armar(path, d):
     color = ORG if alerta else YEL
     card(0.05, 0.882, 0.90, 0.052, color)
     if v:
-        tit = f"NUESTRA APUESTA: {v['kn']} kn  ({v['lo']} a {v['hi']})  de {v['desde']:%H} a {v['hasta']:%H} h"
+        tit = f"NUESTRA APUESTA: {v['kn']} kn  ({v['lo']} a {v['hi']})  {horas_txt(v['desde'], v['hasta'])}"
         sub = (f"Windguru dice {v['wg_lo']}–{v['wg_hi']} kn" if v["wg_lo"] is not None else "Windguru sin datos")
     else:
         tit, sub = "NUESTRA APUESTA: sin datos", ""

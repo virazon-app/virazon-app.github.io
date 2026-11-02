@@ -127,8 +127,8 @@ def main():
             alertas.append(("marea", f"<b>Cambió el agua</b>: ahora {A.tendencia_txt(agua['cmh'])} "
                                      f"({agua['cmh']:+.0f} cm/h), nivel {agua['m']:.2f} m ({agua['fuente']})."))
     if ven and ven["kn"] >= umbral and ven["desde"] - t0 < timedelta(hours=6) and puede(est, "apuesta", t0, 6):
-        alertas.append(("apuesta", f"<b>Nuestra apuesta da para salir</b>: {ven['kn']} kn de "
-                                   f"{ven['desde']:%H} a {ven['hasta']:%H} h."))
+        alertas.append(("apuesta", f"<b>Nuestra apuesta da para salir</b>: {ven['kn']} kn "
+                                   f"{pagina.horas_txt(ven['desde'], ven['hasta'])}."))
 
     silencio = en_silencio(t0, cfg)
     if silencio:
@@ -138,13 +138,13 @@ def main():
 
     # ---- armar y mandar
     banner = alertas[0][1].split("</b>")[0].replace("<b>", "") if alertas else None
-    if True:  # la imagen se arma siempre: es la de la pagina web
-        imagen.armar(IMG, {"t0": t0, "club": club, "nor": nor, "ays": ays, "pron": pron, "ap": ap,
-                           "ventana": ven, "prob": prob, "items": items, "vir": vir, "agua": agua,
-                           "banner": banner, "umbral": umbral})
+    datos_vista = {"t0": t0, "club": club, "nor": nor, "ays": ays, "pron": pron, "ap": ap,
+                   "ventana": ven, "prob": prob, "items": items, "vir": vir, "agua": agua,
+                   "banner": banner, "umbral": umbral}
+    imagen.armar(IMG, datos_vista)  # la imagen es la que se manda por Telegram
     pie = ""
     if ven:
-        pie = (f"\n\nApuesta: <b>{ven['kn']} kn</b> ({ven['lo']}–{ven['hi']}) de {ven['desde']:%H} a {ven['hasta']:%H} h"
+        pie = (f"\n\nApuesta: <b>{ven['kn']} kn</b> ({ven['lo']}–{ven['hi']}) {pagina.horas_txt(ven['desde'], ven['hasta'])}"
                + (f" · Windguru {ven['wg_lo']}–{ven['wg_hi']} kn" if ven["wg_lo"] is not None else "")
                + f"\nProb. SE ≥{umbral} kn próx. 3 h: {prob}%")
     if chat:
@@ -186,7 +186,7 @@ def main():
                     f1(nor and nor["dir"]), f1(ays and ays["kn"]), f1(ays and ays["dir"]),
                     f"{agua['m']:.2f}" if agua else "", f1(agua and agua["cmh"]),
                     f1(wg_now and wg_now["kn"]), f1(ap3), prob, "|".join(a[0] for a in alertas)])
-    pagina.armar(DOCS, t0, ven, prob, [a[1].replace("<b>", "").replace("</b>", "") for a in alertas], HIST, umbral)
+    pagina.armar(DOCS, datos_vista, [a[1].replace("<b>", "").replace("</b>", "") for a in alertas], HIST)
     guardar_estado(est)
     print("Fuentes:", {"club": bool(club), "norden": bool(nor), "aysa": bool(ays), "windguru": bool(pron)},
           "| alertas:", [a[0] for a in alertas], "| prob", prob, "| ventana", ven and ven["kn"])
