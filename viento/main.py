@@ -130,6 +130,13 @@ def main():
         alertas.append(("apuesta", f"<b>Nuestra apuesta da para salir</b>: {ven['kn']} kn "
                                    f"{pagina.horas_txt(ven['desde'], ven['hasta'])}."))
 
+    lluvia = A.lluvia_proximas(pron, t0)
+    al_lluvia = A.alerta_lluvia(lluvia, t0)
+    if al_lluvia and puede(est, "lluvia", t0, 6):
+        alertas.append(("lluvia", f"<b>Se viene lluvia</b>: {al_lluvia['mm']} mm "
+                                  f"{pagina.horas_txt(al_lluvia['desde'], al_lluvia['hasta'])}"
+                                  + (" (fuerte)" if al_lluvia["fuerte"] else "") + "."))
+
     silencio = en_silencio(t0, cfg)
     if silencio:
         alertas = []
@@ -139,7 +146,7 @@ def main():
     # ---- armar y mandar
     banner = alertas[0][1].split("</b>")[0].replace("<b>", "") if alertas else None
     prox = A.proximos_dias(pron, cfg, t0)
-    datos_vista = {"prox": prox, "mejor": A.mejor_dia(prox), "t0": t0, "club": club, "nor": nor, "ays": ays, "pron": pron, "ap": ap,
+    datos_vista = {"lluvia": lluvia, "al_lluvia": al_lluvia, "prox": prox, "mejor": A.mejor_dia(prox), "t0": t0, "club": club, "nor": nor, "ays": ays, "pron": pron, "ap": ap,
                    "ventana": ven, "prob": prob, "items": items, "vir": vir, "agua": agua,
                    "banner": banner, "umbral": umbral}
     imagen.armar(IMG, datos_vista)  # la imagen es la que se manda por Telegram

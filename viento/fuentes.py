@@ -80,6 +80,7 @@ def pronostico_windguru(id_spot, id_modelo):
                 "t": datetime.fromtimestamp(f["initstamp"] + hh * 3600, TZ),
                 "kn": v("WINDSPD"), "raf": v("GUST"), "dir": v("WINDDIR"),
                 "temp": v("TMP"), "nubes": v("TCDC"),
+                "lluvia": v("APCP1") if f.get("APCP1") else v("APCP"),  # mm en la hora
             })
         return {"modelo": f.get("model_name", "GFS"), "init": f.get("initstr"),
                 "sst": sst, "horas": horas}

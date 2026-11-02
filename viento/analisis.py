@@ -244,7 +244,8 @@ def apuesta_dia(pron, cfg, t0, dia):
             v *= 1 + extra_se
         if vir.get("pct") and 13 <= h["t"].hour <= 18:
             v += cfg["virazon_extra_kn"] * vir["pct"] / 100
-        horas.append({"t": h["t"], "kn": round(v, 1), "wg": h["kn"], "raf": h["raf"], "dir": h["dir"]})
+        horas.append({"t": h["t"], "kn": round(v, 1), "wg": h["kn"], "raf": h["raf"], "dir": h["dir"],
+                      "mm": h.get("lluvia") or 0.0})
     if len(horas) < 2:
         return None
     umbral = cfg["umbral_salir_kn"]
@@ -258,7 +259,9 @@ def apuesta_dia(pron, cfg, t0, dia):
     dias = (dia - t0.date()).days
     banda = 2.5 + 0.5 * (dias - 1)
     d_ven = media_angular([p["dir"] for p in horas if ven["desde"] <= p["t"] <= ven["hasta"]])
-    return {"dia": dia, "dias": dias, "horas": horas, "ventana": ven, "veredicto": veredicto, "clase": clase,
+    lluvia_ven = round(sum(p["mm"] for p in horas if ven["desde"] <= p["t"] <= ven["hasta"]), 1)
+    return {"lluvia": lluvia_ven, "lluvia_dia": round(sum(p["mm"] for p in horas), 1),
+            "dia": dia, "dias": dias, "horas": horas, "ventana": ven, "veredicto": veredicto, "clase": clase,
             "dir": d_ven, "vir": vir, "lo": max(0, round(ven["kn"] - banda)), "hi": round(ven["kn"] + banda)}
 
 
@@ -293,3 +296,22 @@ def mejor_dia(dias):
     if not dias:
         return None
     return max(dias, key=lambda a: (a["ventana"]["kn"], -a["dias"]))
+
+
+# ------------------------------------------------------------------ Lluvia
+def lluvia_proximas(pron, t0, horas=24):
+    """Lluvia hora por hora (mm) segun Windguru, desde ahora."""
+    if not pron:
+        return []
+    return [{"t": h["t"], "mm": h.get("lluvia") or 0.0} for h in pron["horas"]
+            if t0 - timedelta(minutes=59) <= h["t"] <= t0 + timedelta(hours=horas)]
+
+
+def alerta_lluvia(serie, t0, horas=3, minimo=0.5):
+    """Si en las proximas `horas` hay lluvia >= minimo mm/h, devuelve el resumen."""
+    prox = [p for p in serie if p["t"] <= t0 + timedelta(hours=horas) and p["mm"] >= minimo]
+    if not prox:
+        return None
+    total = sum(p["mm"] for p in serie if p["t"] <= t0 + timedelta(hours=horas))
+    return {"desde": prox[0]["t"], "hasta": prox[-1]["t"], "mm": round(total, 1),
+            "fuerte": max(p["mm"] for p in prox) >= 4}

@@ -139,7 +139,9 @@ def html_manana(prox, umbral):
             f'<div class="tm-top"><div class="big">{v["kn"]}<span> kn</span></div><div>'
             f'<span class="pill {a["clase"]}">{a["veredicto"]}</span>'
             f'<div class="rng">{a["lo"]}–{a["hi"]} kn · {horas_txt(v["desde"], v["hasta"])} · del {punto(a["dir"])}</div>'
-            f'<div class="wg">Windguru dice {wg_txt} kn · virazón {E(a["vir"]["nivel"])}</div></div></div>'
+            f'<div class="wg">Windguru dice {wg_txt} kn · virazón {E(a["vir"]["nivel"])}'
+            + (f' · <span class="rain-warn">con lluvia ({a["lluvia"]} mm)</span>' if a["lluvia"] >= 1 else "")
+            + '</div></div></div>'
             f'{svg_barras(a["horas"], umbral)}'
             f'<div class="legend"><span class="lg"><i class="s-ap"></i>Nuestra apuesta por hora</span>'
             f'<span class="lg"><i class="s-wg"></i>Windguru</span><span class="lg"><i class="umb"></i>{umbral} kn para salir</span></div>'
@@ -157,7 +159,8 @@ def html_semana(prox, mejor):
                   + ('<div class="badge">Mejor día</div>' if es_mejor else "")
                   + f'<div class="d-n">{nombre_dia(a)}</div><div class="d-d">{a["dia"].day}/{a["dia"].month}</div>'
                   f'<div class="d-v">{v["kn"]}<span> kn</span></div>'
-                  f'<div class="d-s">{horas_txt(v["desde"], v["hasta"])}</div><div class="d-s">{punto(a["dir"])}</div></div>')
+                  f'<div class="d-s">{horas_txt(v["desde"], v["hasta"])}</div><div class="d-s">{punto(a["dir"])}</div>'
+                  + (f'<div class="d-r">☂ {a["lluvia_dia"]:.0f} mm</div>' if a["lluvia_dia"] >= 1 else "") + '</div>')
     return (f'<section><h2>¿Qué día está bueno para navegar?</h2><div class="week">{cards}</div>'
             f'<div class="muted" style="margin-top:8px">Cuanto más lejos el día, menos precisa la apuesta.</div></section>')
 
@@ -169,6 +172,32 @@ CAMARAS = [  # de norte a sur; id de Windy Webcams
     (1745449788, "La Lucila · Paseo del Viento", "mirando al noroeste"),
     (1577126865, "Olivos", "mirando al norte"),
 ]
+
+
+def html_lluvia(serie, al, umbral_mm=0.5):
+    radar = ('<div class="cam-f radar"><iframe src="https://www.rainviewer.com/map.html?loc=-34.47,-58.50,8'
+             '&oFa=0&oC=1&oU=0&oCS=1&oF=0&oAP=1&c=3&o=83&lm=1&layer=radar&sm=1&sn=1" loading="lazy" '
+             'title="Radar de lluvia" allowfullscreen></iframe></div>')
+    barras = ""
+    if serie:
+        mx = max(3, max(p["mm"] for p in serie))
+        for p in serie[:24]:
+            h = 4 + p["mm"] / mx * 56
+            cls = "r-hi" if p["mm"] >= 4 else ("r-on" if p["mm"] >= umbral_mm else "r-off")
+            lbl = f"{p['mm']:.1f}" if p["mm"] >= umbral_mm else ""
+            barras += (f'<div class="rb"><span class="rv">{lbl}</span><i class="{cls}" style="height:{h:.0f}px"></i>'
+                       f'<span class="rh">{p["t"]:%H}</span></div>')
+    total = sum(p["mm"] for p in serie[:24]) if serie else 0
+    resumen = ("Sin lluvia en las próximas 24 h" if total < umbral_mm
+               else f"{total:.1f} mm en las próximas 24 h")
+    if al:
+        resumen = (f'<b class="rain-warn">Se viene lluvia: {al["mm"]} mm {horas_txt(al["desde"], al["hasta"])}'
+                   f'{" (fuerte)" if al["fuerte"] else ""}</b>')
+    return (f'<section id="lluvia"><h2>Lluvia</h2><div class="muted" style="margin-bottom:10px">{resumen}</div>'
+            f'<div class="rain">{barras}</div>'
+            f'<div class="muted" style="margin:6px 0 12px">mm por hora según Windguru</div>{radar}'
+            f'<div class="muted" style="margin-top:8px">Radar en vivo vía <a href="https://www.rainviewer.com" '
+            f'target="_blank" rel="noopener">RainViewer</a>: tocá play para ver hacia dónde se mueve la lluvia.</div></section>')
 
 
 def html_camaras():
@@ -280,6 +309,7 @@ def armar(docs: Path, d, alertas, hist_csv: Path):
     fuentes_html = "".join(
         f'<li><span class="dotst {"ok" if f["ok"] else "bad"}"></span>{E(f["n"])}'
         f'<span class="muted"> · {E(f["txt"])}{(" · " + E(f["d"])) if f["d"] else ""}</span></li>' for f in fuentes)
+    alertas = [a for a in alertas if not a.startswith("Se viene lluvia")]  # la lluvia tiene su propio cartel
     avisos_html = "".join(f"<li>{E(a)}</li>" for a in alertas)
     datos = {"actualizado": t0.isoformat(), "apuesta": ven and {"kn": ven["kn"], "lo": ven["lo"], "hi": ven["hi"],
              "desde": ven["desde"].isoformat(), "hasta": ven["hasta"].isoformat()}, "prob_se": prob, "fuentes": fuentes}
@@ -293,6 +323,10 @@ def armar(docs: Path, d, alertas, hist_csv: Path):
         avisos=(f'<section class="alert"><b>Aviso</b><ul>{avisos_html}</ul></section>' if alertas else ""),
         estaciones=est_html, prob=prob, prob_w=max(3, prob), razones=razones, umbral=umbral,
         grafico=svg_grafico(t0, club, nor, ays, pron, ap, umbral), agua=agua_html, vir=vir_html,
+        lluvia_top=(f'<a class="bestline rainline" href="#lluvia">☂ Se viene lluvia: {d["al_lluvia"]["mm"]} mm '
+                    f'{horas_txt(d["al_lluvia"]["desde"], d["al_lluvia"]["hasta"])}'
+                    + (" · fuerte" if d["al_lluvia"]["fuerte"] else "") + '</a>') if d.get("al_lluvia") else "",
+        lluvia=html_lluvia(d.get("lluvia") or [], d.get("al_lluvia")),
         camaras=html_camaras(), mejor=mejor_txt, manana=html_manana(prox, umbral), semana=html_semana(prox, mejor),
         pron=pron_html, modelo=E(pron["modelo"] if pron else "Windguru"), tabla=tabla, fuentes=fuentes_html)
     (docs / "index.html").write_text(page, encoding="utf-8")
@@ -382,11 +416,17 @@ font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
 .cam-f iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 figcaption{font-size:13px;color:var(--muted);margin-top:6px}figcaption b{color:var(--txt)}
 section a{color:var(--accent)}
+.rainline{border-color:rgba(96,165,250,.55);background:rgba(37,99,235,.12);color:#bfdbfe}
+.rain{display:flex;align-items:flex-end;gap:3px;height:96px}
+.rb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
+.rb i{display:block;width:100%;border-radius:3px 3px 0 0}.r-off{background:#1c3456}.r-on{background:#60a5fa}.r-hi{background:#2563eb}
+.rv{font-size:10px;color:#93c5fd;height:13px}.rh{font-size:10px;color:var(--muted);margin-top:3px}
+.radar{padding-top:62%}.rain-warn{color:#93c5fd}.d-r{color:#93c5fd;font-size:11.5px;margin-top:2px}
 footer{color:var(--muted);font-size:12.5px;margin-top:18px;line-height:1.6}
 @media (max-width:640px){.big{font-size:52px}.stations{grid-template-columns:repeat(3,1fr);gap:6px}.st{padding:8px 4px}
 .st-v{font-size:20px}.prob{grid-template-columns:1fr}.two{grid-template-columns:1fr}.fcs{grid-template-columns:repeat(4,1fr)}
 .hero{grid-template-columns:1fr}.tm-top{grid-template-columns:1fr}
-.week{grid-template-columns:repeat(4,1fr);gap:10px 6px}.cams{grid-template-columns:1fr}.b-v{font-size:20px}.st-v small{display:block}
+.week{grid-template-columns:repeat(4,1fr);gap:10px 6px}.cams{grid-template-columns:1fr}.radar{padding-top:110%}.rb:nth-child(even) .rh{visibility:hidden}.b-v{font-size:20px}.st-v small{display:block}
 .ax{font-size:20px}.lbl-ap{font-size:22px}.live{font-size:12px}header{align-items:flex-start}}
 """
 
@@ -408,6 +448,7 @@ PLANTILLA = """<!doctype html>
 
 <section class="hero"><div class="big">{ap_big}<span> kn</span></div>
 <div><span class="pill {clase_estado}">{estado}</span><div class="rng">Nuestra apuesta hoy: {ap_rng}</div><div class="wg">{ap_wg}</div></div></section>
+{lluvia_top}
 {mejor}
 {avisos}
 <section><h2>Ahora</h2><div class="stations">{estaciones}</div></section>
@@ -421,6 +462,8 @@ PLANTILLA = """<!doctype html>
 
 {manana}
 <div id="semana">{semana}</div>
+
+{lluvia}
 
 <div class="two"><section><h2>Agua</h2>{agua}</section><section><h2>Virazón esta tarde</h2>{vir}</section></div>
 
