@@ -1,0 +1,39 @@
+name: Viento San Isidro
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # cada 15 minutos (GitHub a veces se demora unos minutos)
+  workflow_dispatch: {}       # boton "Run workflow" para probar a mano
+
+permissions:
+  contents: write
+
+concurrency:
+  group: viento
+  cancel-in-progress: false
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Revisar viento y avisar
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TZ: America/Argentina/Buenos_Aires
+        run: python -m viento.main
+      - name: Guardar historial
+        run: |
+          git config user.name "viento-bot"
+          git config user.email "viento-bot@users.noreply.github.com"
+          git add data/historial.csv data/estado.json docs
+          git commit -m "datos $(date +'%Y-%m-%d %H:%M')" || exit 0
+          git pull --rebase -X ours || true
+          git push
