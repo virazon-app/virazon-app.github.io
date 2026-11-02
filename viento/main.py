@@ -126,7 +126,54 @@ def main():
                 and puede(est, "marea", t0, 4)):
             alertas.append(("marea", f"<b>Cambió el agua</b>: ahora {A.tendencia_txt(agua['cmh'])} "
                                      f"({agua['cmh']:+.0f} cm/h), nivel {agua['m']:.2f} m ({agua['fuente']})."))
-    if ven and ven["kn"] >= umbral and ven["desde"] - t0 < timedelta(hours=6) and puede(est, "apuesta", t0, 6):
+    # --- avisos "del dia" (una vez por dia cada uno)
+    hoy = t0.date().isoformat()
+    dia_av = est.setdefault("avisos_dia", {})
+    pend_dia = {}  # se marcan como enviados recien cuando salen por Telegram
+
+    def una_vez(tipo, dia=hoy):
+        return dia_av.get(tipo) != dia
+
+    # 1) Nuestra apuesta cree que hoy va a haber 12 kn o mas
+    futuras = [p for p in ap[1:] if p["t"].date() == t0.date() and 8 <= p["t"].hour <= 20 and p["kn"] >= umbral]
+    if futuras and una_vez("apuesta_hoy"):
+        mx = max(futuras, key=lambda p: p["kn"])
+        alertas.append(("apuesta_hoy", f"<b>Nuestra apuesta: hoy hay viento</b>: hasta {mx['kn']:.0f} kn "
+                                       f"{pagina.horas_txt(futuras[0]['t'], futuras[-1]['t'])} (Windguru da "
+                                       f"{max(p['wg'] or 0 for p in futuras):.0f} kn)."))
+        pend_dia["apuesta_hoy"] = hoy
+
+    # 2) Windguru da SE de 12 kn o mas en algun momento de hoy
+    def se_fuerte(dia, desde=None):
+        if not pron:
+            return []
+        return [h for h in pron["horas"] if h["t"].date() == dia and 8 <= h["t"].hour <= 20
+                and (desde is None or h["t"] >= desde) and h["kn"] >= umbral and A.en_sector(h["dir"], 100, 170)]
+    se_hoy = se_fuerte(t0.date(), t0 - timedelta(hours=1))
+    if se_hoy and una_vez("se_hoy"):
+        mx = max(se_hoy, key=lambda h: h["kn"])
+        alertas.append(("se_hoy", f"<b>Pronóstico de SE para hoy</b>: Windguru da hasta {mx['kn']:.0f} kn del "
+                                  f"{A.punto(mx['dir'])} {pagina.horas_txt(se_hoy[0]['t'], se_hoy[-1]['t'])} "
+                                  f"(ráfagas {mx['raf']:.0f})."))
+        pend_dia["se_hoy"] = hoy
+    # ... y a la noche, el aviso para manana
+    manana = t0.date() + timedelta(days=1)
+    se_man = se_fuerte(manana)
+    if t0.hour >= 19 and se_man and una_vez("se_manana", manana.isoformat()):
+        mx = max(se_man, key=lambda h: h["kn"])
+        alertas.append(("se_manana", f"<b>Mañana pinta SE</b>: Windguru da hasta {mx['kn']:.0f} kn del "
+                                     f"{A.punto(mx['dir'])} {pagina.horas_txt(se_man[0]['t'], se_man[-1]['t'])}."))
+        pend_dia["se_manana"] = manana.isoformat()
+
+    # 3) Probabilidad de que sople (SE >= umbral en las proximas 3 h) de 50% o mas
+    if prob >= cfg.get("prob_alerta", 50) and puede(est, "prob", t0, espera):
+        razones = "; ".join(t for ok, t in items if ok)
+        alertas.append(("prob", f"<b>{prob}% de chance de que sople</b> (SE ≥{umbral} kn en las próximas 3 h)"
+                                + (f": {razones}." if razones else ".")))
+
+    # 4) La apuesta da para salir en las proximas horas
+    if (ven and ven["kn"] >= umbral and ven["desde"] - t0 < timedelta(hours=6) and puede(est, "apuesta", t0, 6)
+            and "apuesta_hoy" not in pend_dia):
         alertas.append(("apuesta", f"<b>Nuestra apuesta da para salir</b>: {ven['kn']} kn "
                                    f"{pagina.horas_txt(ven['desde'], ven['hasta'])}."))
 
@@ -153,7 +200,8 @@ def main():
     pie = ""
     if ven:
         pie = (f"\n\nApuesta: <b>{ven['kn']} kn</b> ({ven['lo']}–{ven['hi']}) {pagina.horas_txt(ven['desde'], ven['hasta'])}"
-               + (f" · Windguru {ven['wg_lo']}–{ven['wg_hi']} kn" if ven["wg_lo"] is not None else "")
+               + ((f" · Windguru {ven['wg_lo']} kn" if ven["wg_lo"] == ven["wg_hi"] else f" · Windguru {ven['wg_lo']}–{ven['wg_hi']} kn")
+                  if ven["wg_lo"] is not None else "")
                + f"\nProb. SE ≥{umbral} kn próx. 3 h: {prob}%")
     if chat:
         try:
@@ -171,6 +219,7 @@ def main():
                 telegram.foto(chat, IMG, "\n".join(a[1] for a in alertas) + pie)
                 for tipo, _ in alertas:
                     marcar(est, tipo, t0)
+                dia_av.update(pend_dia)
             elif resumen:
                 telegram.foto(chat, IMG, f"<b>Buen día.</b> Virazón: {vir['nivel']}." + pie)
             elif any(p.startswith(("/estado", "/start")) for p in pedidos):
