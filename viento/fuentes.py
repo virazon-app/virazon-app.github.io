@@ -113,9 +113,10 @@ def _ctx_viejo(ctx):
 
 
 def _bundle_con_intermedio(host):
-    """El servidor de la CARP no manda el certificado intermedio (los navegadores lo buscan solos).
-    Lo bajamos de la direccion que indica su propio certificado (AIA) y armamos un bundle de CAs
-    con certifi + ese intermedio. La verificacion SSL sigue activa."""
+    """El servidor de la CARP no manda la cadena completa de certificados (los navegadores la buscan solos).
+    La bajamos de las direcciones que indica el propio certificado (AIA) y armamos un bundle con
+    certifi + esa cadena. Ojo: si la raiz no esta en certifi se confia en la que publica la CA;
+    es aceptable porque solo se leen datos publicos de viento (no se manda nada)."""
     import os
     import ssl
     import tempfile
@@ -133,16 +134,25 @@ def _bundle_con_intermedio(host):
         with ctx.wrap_socket(sock, server_hostname=host) as tls:
             der = tls.getpeercert(binary_form=True)
     hoja = x509.load_der_x509_certificate(der)
-    aia = hoja.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
-    urls = [d.access_location.value for d in aia if d.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
-    inter = []
-    for u in urls:
-        raw = requests.get(u, timeout=TIMEOUT).content
+    # Seguir la cadena (AIA) hasta 4 niveles: intermedios y raices que no vengan en certifi
+    inter, actual = [], hoja
+    for _ in range(4):
+        try:
+            aia = actual.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
+        except x509.ExtensionNotFound:
+            break
+        urls = [d.access_location.value for d in aia if d.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
+        if not urls:
+            break
+        raw = requests.get(urls[0], timeout=TIMEOUT).content
         try:
             c = x509.load_der_x509_certificate(raw)
         except ValueError:
             c = x509.load_pem_x509_certificate(raw)
         inter.append(c.public_bytes(Encoding.PEM).decode())
+        if c.issuer == c.subject:
+            break
+        actual = c
     ruta = os.path.join(tempfile.gettempdir(), f"ca_{host}.pem")
     with open(certifi.where()) as f, open(ruta, "w") as g:
         g.write(f.read() + "\n" + "\n".join(inter))
