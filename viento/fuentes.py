@@ -102,10 +102,45 @@ def _tabla_ultima(html):
     return [re.sub(r"<[^>]+>", "", c).strip() for c in celdas]
 
 
+def _bundle_con_intermedio(host):
+    """El servidor de la CARP no manda el certificado intermedio (los navegadores lo buscan solos).
+    Lo bajamos de la direccion que indica su propio certificado (AIA) y armamos un bundle de CAs
+    con certifi + ese intermedio. La verificacion SSL sigue activa."""
+    import os
+    import ssl
+    import tempfile
+
+    import certifi
+    from cryptography import x509
+    from cryptography.hazmat.primitives.serialization import Encoding
+    from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+
+    pem = ssl.get_server_certificate((host, 443))
+    hoja = x509.load_pem_x509_certificate(pem.encode())
+    aia = hoja.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
+    urls = [d.access_location.value for d in aia if d.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
+    inter = []
+    for u in urls:
+        raw = requests.get(u, timeout=TIMEOUT).content
+        try:
+            c = x509.load_der_x509_certificate(raw)
+        except ValueError:
+            c = x509.load_pem_x509_certificate(raw)
+        inter.append(c.public_bytes(Encoding.PEM).decode())
+    ruta = os.path.join(tempfile.gettempdir(), f"ca_{host}.pem")
+    with open(certifi.where()) as f, open(ruta, "w") as g:
+        g.write(f.read() + "\n" + "\n".join(inter))
+    return ruta
+
+
 def norden(id_estacion=2):
     """Viento (velocidad, rafaga, direccion) y marea de Pilote Norden."""
     try:
         s = requests.Session()
+        try:
+            requests.get(CARP + "/favicon.ico", timeout=TIMEOUT)
+        except requests.exceptions.SSLError:
+            s.verify = _bundle_con_intermedio("meteo.comisionriodelaplata.org")
         s.headers.update({"User-Agent": UA,
                           "Referer": "https://www.comisionriodelaplata.org/"})
         s.get(CARP + "/", params={"w": 900, "h": 450, "lang": "ES"}, timeout=TIMEOUT)
