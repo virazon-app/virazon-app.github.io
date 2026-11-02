@@ -1,0 +1,24 @@
+{
+  "_nota": "Podes cambiar estos numeros desde GitHub (boton del lapiz). Nudos = kn.",
+  "umbral_salir_kn": 12,
+  "umbral_bajo_kn": 8,
+  "norden": {
+    "sector_se_desde": 100,
+    "sector_se_hasta": 170,
+    "alerta_kn": 12,
+    "subida_kn_en_1h": 2,
+    "factor_llega_al_club": 0.6,
+    "demora_horas": 2
+  },
+  "rotacion_grados": 45,
+  "rotacion_min_kn": 6,
+  "virazon_extra_kn": 2,
+  "horas_silencio": [23, 7],
+  "resumen_diario_hora": 8,
+  "espera_entre_alertas_iguales_horas": 3,
+  "alertar_cambio_marea": true,
+  "windguru_estacion_club": 2042,
+  "windguru_spot_pronostico": 261,
+  "windguru_modelo": 3,
+  "aysa_estacion": "82E52984-F07F-4F84-9E6B-17E7F85D7478"
+}
