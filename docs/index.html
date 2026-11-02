@@ -1,28 +1,107 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="refresh" content="300">
-<title>Viento San Isidro</title>
+<title>Virazón · Viento en el Náutico San Isidro</title>
+<meta name="description" content="Viento en vivo en el Club Náutico San Isidro, Pilote Norden y AySA, con pronóstico de Windguru y nuestra apuesta de nudos.">
+<meta name="theme-color" content="#071426">
+<meta property="og:title" content="Virazón · Viento en San Isidro">
+<meta property="og:description" content="Viento en vivo, Pilote Norden, agua y pronóstico. Se actualiza cada 15 minutos.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="favicon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Virazón">
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--txt:#e2e8f0;--muted:#94a3b8;--yel:#eab308;--green:#22c55e}
-body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}
-main{max-width:760px;margin:0 auto;padding:16px}
-h1{font-size:22px;margin:4px 0} .muted{color:var(--muted);font-size:14px}
-.apuesta{background:var(--yel);color:#111;border-radius:14px;padding:14px 16px;margin:12px 0}
-.apuesta b{font-size:24px} .apuesta small{font-size:15px}
-.card{background:var(--card);border-radius:14px;padding:12px 16px;margin:12px 0}
-ul{margin:6px 0;padding-left:20px} img{width:100%;border-radius:14px;display:block}
-.wrap{overflow-x:auto} table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
-th,td{padding:5px 7px;text-align:right;border-bottom:1px solid #334155} th{color:var(--muted);font-weight:600}
+:root{--bg:#071426;--card:#0e1f38;--card2:#132a4a;--line:#1f3a60;--txt:#e6eef8;--muted:#8aa0bd;
+--accent:#5eead4;--go:#22c55e;--maybe:#f5b301;--nogo:#64748b;--club:#38bdf8;--norden:#fb923c;--aysa:#a78bfa;--wg:#4ade80;--ap:#facc15}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:15px/1.45 Inter,-apple-system,system-ui,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:880px;margin:0 auto;padding:16px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 14px}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:34px;height:34px;border-radius:9px}
+.brand h1{font-size:20px;margin:0;letter-spacing:.2px}.brand small{display:block;color:var(--muted);font-size:12.5px}
+.live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);white-space:nowrap}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--go);box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:p 2s infinite}
+.live.stale .pulse{background:var(--maybe);animation:none}
+@keyframes p{70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin:0 0 12px;font-weight:600}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;background:linear-gradient(135deg,#0f2a4d,#0b1d36)}
+.big{font-size:64px;font-weight:800;line-height:1;letter-spacing:-2px}.big span{font-size:20px;font-weight:600;letter-spacing:0;color:var(--muted)}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:700;font-size:13px;margin-bottom:6px}
+.pill.go{background:rgba(34,197,94,.15);color:var(--go)}.pill.maybe{background:rgba(245,179,1,.15);color:var(--maybe)}
+.pill.nogo{background:rgba(100,116,139,.2);color:#b6c2d3}
+.hero .rng{font-size:17px;font-weight:600}.hero .wg{color:var(--muted);font-size:14px}
+.alert{border-color:#7c4a03;background:#2a1a03}.alert ul{margin:6px 0 0;padding-left:18px}
+.stations{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.st{background:var(--card2);border-radius:12px;padding:12px;text-align:center}
+.st-h{font-size:13px;color:var(--muted);font-weight:600}.st-v{font-size:26px;font-weight:800}.st-v span{font-size:14px;color:var(--muted);font-weight:600}
+.st-v small{font-size:13px;color:var(--muted);font-weight:600}.st-s{font-size:12.5px;color:var(--muted)}
+.compass{width:100%;max-width:130px;margin:4px auto;display:block}.dial{fill:#0a1830;stroke:var(--line);stroke-width:2}
+.tick{stroke:#3b5a85;stroke-width:2}.card-l{fill:var(--muted);font-size:12px;font-weight:700;text-anchor:middle}
+.arrow{stroke:var(--club);stroke-width:5;stroke-linecap:round}.arrowhead{fill:var(--club)}
+.prob{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center}
+.pnum{font-size:44px;font-weight:800}.bar{height:8px;background:var(--card2);border-radius:9px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--nogo),var(--maybe),var(--go))}
+ul.why{list-style:none;margin:0;padding:0}ul.why li{padding:3px 0 3px 24px;position:relative}
+ul.why li:before{position:absolute;left:0;font-weight:800}ul.why li.ok:before{content:"✓";color:var(--go)}ul.why li.no:before{content:"✕";color:#f87171}
+.chart{width:100%;height:auto;display:block}.grid{stroke:#1c3456;stroke-width:1}.ax{fill:var(--muted);font-size:11px}
+.zone{fill:rgba(34,197,94,.07)}.now{stroke:#8aa0bd;stroke-dasharray:3 4}.band{fill:rgba(250,204,21,.13)}
+polyline{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.s-club{stroke:var(--club);stroke-width:3}.s-norden{stroke:var(--norden)}.s-aysa{stroke:var(--aysa);stroke-width:2}
+.s-wg{stroke:var(--wg);stroke-dasharray:7 5}.s-ap{stroke:var(--ap);stroke-width:3.5}
+.dot-ap{fill:var(--ap)}.lbl-ap{fill:var(--ap);font-size:12px;font-weight:800}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.lg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.lg i.s-club{background:var(--club)}.lg i.s-norden{background:var(--norden)}.lg i.s-aysa{background:var(--aysa)}
+.lg i.s-wg{background:var(--wg)}.lg i.s-ap{background:var(--ap)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.two section{margin:0}
+.kv{display:flex;align-items:baseline;gap:10px}.kv b{font-size:30px}.kv span{font-weight:700;font-size:16px;color:var(--muted)}
+.kv .up{color:var(--go)}.kv .down{color:var(--norden)}
+.fcs{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.fc{background:var(--card2);border-radius:10px;padding:8px 4px;text-align:center}.fc.good{outline:1.5px solid var(--go)}
+.fc-h{font-size:11.5px;color:var(--muted)}.fc-v{font-size:22px;font-weight:800}.fc-s{font-size:11px;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+details summary{cursor:pointer;color:var(--muted);font-weight:600}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap;margin-top:10px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
+ul.src{list-style:none;padding:0;margin:0}ul.src li{padding:4px 0}
+.dotst{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}.dotst.ok{background:var(--go)}.dotst.bad{background:#f87171}
+footer{color:var(--muted);font-size:12.5px;margin-top:18px;line-height:1.6}
+@media (max-width:640px){.big{font-size:52px}.stations{grid-template-columns:repeat(3,1fr);gap:6px}.st{padding:8px 4px}
+.st-v{font-size:20px}.prob{grid-template-columns:1fr}.two{grid-template-columns:1fr}.fcs{grid-template-columns:repeat(4,1fr)}
+.hero{grid-template-columns:1fr}.st-v small{display:block}
+.ax{font-size:20px}.lbl-ap{font-size:22px}.live{font-size:12px}header{align-items:flex-start}}
 </style></head><body><main>
-<h1>Viento · Náutico San Isidro</h1>
-<div class="muted">Actualizado 02/11 15:47 · se refresca solo cada 5 min (los datos, cada 15)</div>
-<div class="apuesta">Nuestra apuesta: <b>8 kn <small>(6 a 9)</small> de 20 a 20 h</b><br>Windguru dice 8–8 kn · prob. SE ≥12 kn próx. 3 h: 17%</div>
-<div class="card"><b>Avisos</b><ul><li>Sin alertas ahora.</li></ul></div>
-<img src="tablero.png?v=202611021547" alt="Tablero de viento">
-<div class="card"><b>Últimas 24 h</b> <span class="muted">(kn, grados, metros)</span>
-<div class="wrap"><table><tr><th>Hora</th><th>Club</th><th>Ráf</th><th>Dir</th><th>Norden</th><th>Dir N</th>
-<th>Agua</th><th>cm/h</th><th>Windguru</th><th>Apuesta +3h</th><th>Prob SE</th></tr><tr><td>15:47</td><td>8.2</td><td>9.2</td><td>74.0</td><td>1.0</td><td>253.2</td><td>0.83</td><td>-8.0</td><td>6.0</td><td>6.7</td><td>17</td></tr><tr><td>13:04</td><td>3.8</td><td>4.5</td><td>134.0</td><td>–</td><td>–</td><td>0.85</td><td>22.0</td><td>0.8</td><td>4.7</td><td>17</td></tr><tr><td>12:59</td><td>5.0</td><td>5.8</td><td>149.0</td><td>–</td><td>–</td><td>0.85</td><td>22.0</td><td>0.8</td><td>3.7</td><td>17</td></tr><tr><td>12:57</td><td>5.2</td><td>6.5</td><td>131.0</td><td>–</td><td>–</td><td>0.85</td><td>22.0</td><td>0.8</td><td>3.7</td><td>17</td></tr><tr><td>12:55</td><td>5.2</td><td>6.5</td><td>131.0</td><td>–</td><td>–</td><td>0.85</td><td>22.0</td><td>0.8</td><td>3.7</td><td>17</td></tr><tr><td>12:40</td><td>5.5</td><td>7.1</td><td>119.0</td><td>–</td><td>–</td><td>0.85</td><td>22.0</td><td>0.8</td><td>3.8</td><td>17</td></tr></table></div></div>
-<p class="muted">Fuentes: estación Windguru del Club Náutico San Isidro, Pilote Norden (CARP), AySA Palermo y Windguru GFS 13 km.
-La apuesta y la probabilidad son una regla inicial, todavía sin calibrar.</p>
-</main></body></html>
+<header><div class="brand"><img src="favicon.svg" alt=""><div><h1>Virazón</h1><small>Náutico San Isidro · Río de la Plata</small></div></div>
+<div class="live" id="live"><span class="pulse"></span><span id="ago" data-t="2026-11-02T16:49:46.907259-03:00">lun 2/11 · 16:49</span></div></header>
+
+<section class="hero"><div class="big">8<span> kn</span></div>
+<div><span class="pill nogo">No da para salir</span><div class="rng">Nuestra apuesta: 6–9 kn · a las 20 h</div><div class="wg">Windguru: 8 kn</div></div></section>
+
+<section><h2>Ahora</h2><div class="stations"><div class="st"><div class="st-h">Club Náutico</div><svg viewBox="0 0 150 150" class="compass" role="img" aria-label="dirección ENE"><circle cx="75.0" cy="75.0" r="61.0" class="dial"/><line x1="75.0" y1="23.0" x2="75.0" y2="14.0" class="tick"/><line x1="103.0" y1="26.5" x2="105.5" y2="22.2" class="tick"/><line x1="123.5" y1="47.0" x2="127.8" y2="44.5" class="tick"/><line x1="127.0" y1="75.0" x2="136.0" y2="75.0" class="tick"/><line x1="123.5" y1="103.0" x2="127.8" y2="105.5" class="tick"/><line x1="103.0" y1="123.5" x2="105.5" y2="127.8" class="tick"/><line x1="75.0" y1="127.0" x2="75.0" y2="136.0" class="tick"/><line x1="47.0" y1="123.5" x2="44.5" y2="127.8" class="tick"/><line x1="26.5" y1="103.0" x2="22.2" y2="105.5" class="tick"/><line x1="23.0" y1="75.0" x2="14.0" y2="75.0" class="tick"/><line x1="26.5" y1="47.0" x2="22.2" y2="44.5" class="tick"/><line x1="47.0" y1="26.5" x2="44.5" y2="22.2" class="tick"/><text x="75.0" y="38.0" class="card-l">N</text><text x="116.0" y="79.0" class="card-l">E</text><text x="75.0" y="120.0" class="card-l">S</text><text x="34.0" y="79.0" class="card-l">O</text><g transform="rotate(238 75.0 75.0)"><line x1="75.0" y1="112.8" x2="75.0" y2="47.5" class="arrow"/><polygon points="75.0,32.3 66.0,50.6 84.0,50.6" class="arrowhead"/></g></svg><div class="st-v">6.1<span> kn</span> <small>ráf 7</small></div><div class="st-s">ENE · 16:45</div></div><div class="st"><div class="st-h">Pilote Norden</div><svg viewBox="0 0 150 150" class="compass" role="img" aria-label="dirección OSO"><circle cx="75.0" cy="75.0" r="61.0" class="dial"/><line x1="75.0" y1="23.0" x2="75.0" y2="14.0" class="tick"/><line x1="103.0" y1="26.5" x2="105.5" y2="22.2" class="tick"/><line x1="123.5" y1="47.0" x2="127.8" y2="44.5" class="tick"/><line x1="127.0" y1="75.0" x2="136.0" y2="75.0" class="tick"/><line x1="123.5" y1="103.0" x2="127.8" y2="105.5" class="tick"/><line x1="103.0" y1="123.5" x2="105.5" y2="127.8" class="tick"/><line x1="75.0" y1="127.0" x2="75.0" y2="136.0" class="tick"/><line x1="47.0" y1="123.5" x2="44.5" y2="127.8" class="tick"/><line x1="26.5" y1="103.0" x2="22.2" y2="105.5" class="tick"/><line x1="23.0" y1="75.0" x2="14.0" y2="75.0" class="tick"/><line x1="26.5" y1="47.0" x2="22.2" y2="44.5" class="tick"/><line x1="47.0" y1="26.5" x2="44.5" y2="22.2" class="tick"/><text x="75.0" y="38.0" class="card-l">N</text><text x="116.0" y="79.0" class="card-l">E</text><text x="75.0" y="120.0" class="card-l">S</text><text x="34.0" y="79.0" class="card-l">O</text><g transform="rotate(433 75.0 75.0)"><line x1="75.0" y1="112.8" x2="75.0" y2="47.5" class="arrow"/><polygon points="75.0,32.3 66.0,50.6 84.0,50.6" class="arrowhead"/></g></svg><div class="st-v">1.0<span> kn</span> <small>ráf 2</small></div><div class="st-s">OSO · 14:12</div></div><div class="st"><div class="st-h">AySA Palermo</div><svg viewBox="0 0 150 150" class="compass" role="img" aria-label="dirección NE"><circle cx="75.0" cy="75.0" r="61.0" class="dial"/><line x1="75.0" y1="23.0" x2="75.0" y2="14.0" class="tick"/><line x1="103.0" y1="26.5" x2="105.5" y2="22.2" class="tick"/><line x1="123.5" y1="47.0" x2="127.8" y2="44.5" class="tick"/><line x1="127.0" y1="75.0" x2="136.0" y2="75.0" class="tick"/><line x1="123.5" y1="103.0" x2="127.8" y2="105.5" class="tick"/><line x1="103.0" y1="123.5" x2="105.5" y2="127.8" class="tick"/><line x1="75.0" y1="127.0" x2="75.0" y2="136.0" class="tick"/><line x1="47.0" y1="123.5" x2="44.5" y2="127.8" class="tick"/><line x1="26.5" y1="103.0" x2="22.2" y2="105.5" class="tick"/><line x1="23.0" y1="75.0" x2="14.0" y2="75.0" class="tick"/><line x1="26.5" y1="47.0" x2="22.2" y2="44.5" class="tick"/><line x1="47.0" y1="26.5" x2="44.5" y2="22.2" class="tick"/><text x="75.0" y="38.0" class="card-l">N</text><text x="116.0" y="79.0" class="card-l">E</text><text x="75.0" y="120.0" class="card-l">S</text><text x="34.0" y="79.0" class="card-l">O</text><g transform="rotate(234 75.0 75.0)"><line x1="75.0" y1="112.8" x2="75.0" y2="47.5" class="arrow"/><polygon points="75.0,32.3 66.0,50.6 84.0,50.6" class="arrowhead"/></g></svg><div class="st-v">9.9<span> kn</span> <small>ráf 12</small></div><div class="st-s">NE · 16:00</div></div></div></section>
+
+<section class="prob"><div><div class="pnum">17%</div><div class="muted">chance de SE ≥12 kn en las próximas 3 h</div>
+<div class="bar"><i style="width:17%"></i></div></div><ul class="why"><li class="no">Norden del OSO (no SE): 1 kn</li><li class="ok">Club del ENE</li><li class="no">Windguru da solo 6 kn</li><li class="no">Virazón floja</li></ul></section>
+
+<section><h2>Viento (kn) · medido, Windguru y nuestra apuesta</h2><svg viewBox="0 0 720 260" class="chart" role="img" aria-label="gráfico de viento"><rect x="34" y="14.0" width="676" height="88.0" class="zone"/><line x1="34" x2="710" y1="234.0" y2="234.0" class="grid"/><text x="28" y="238.0" class="ax" text-anchor="end">0</text><line x1="34" x2="710" y1="179.0" y2="179.0" class="grid"/><text x="28" y="183.0" class="ax" text-anchor="end">5</text><line x1="34" x2="710" y1="124.0" y2="124.0" class="grid"/><text x="28" y="128.0" class="ax" text-anchor="end">10</text><line x1="34" x2="710" y1="69.0" y2="69.0" class="grid"/><text x="28" y="73.0" class="ax" text-anchor="end">15</text><line x1="34" x2="710" y1="14.0" y2="14.0" class="grid"/><text x="28" y="18.0" class="ax" text-anchor="end">20</text><text x="34.0" y="254" class="ax" text-anchor="middle">10h</text><text x="118.5" y="254" class="ax" text-anchor="middle">12h</text><text x="203.0" y="254" class="ax" text-anchor="middle">14h</text><text x="287.5" y="254" class="ax" text-anchor="middle">16h</text><text x="372.0" y="254" class="ax" text-anchor="middle">18h</text><text x="456.5" y="254" class="ax" text-anchor="middle">20h</text><text x="541.0" y="254" class="ax" text-anchor="middle">22h</text><text x="625.5" y="254" class="ax" text-anchor="middle">00h</text><text x="710.0" y="254" class="ax" text-anchor="middle">02h</text><line x1="287.5" x2="287.5" y1="14" y2="234" class="now"/><text x="291.5" y="24" class="ax">ahora</text><polygon points="287.5,150.4 294.7,146.0 336.9,149.3 379.2,148.2 421.4,132.8 463.7,122.9 505.9,131.7 548.2,130.6 590.4,136.1 632.7,141.6 674.9,147.1 717.2,150.4 759.4,140.5 759.4,173.5 717.2,183.4 674.9,180.1 632.7,174.6 590.4,169.1 548.2,163.6 505.9,164.7 463.7,155.9 421.4,165.8 379.2,181.2 336.9,182.3 294.7,179.0 287.5,183.4" class="band"/><polyline points="41.2,182.3 62.3,176.8 83.4,180.1 104.6,170.2 125.7,186.7 146.8,197.7 167.9,177.9 189.1,162.5 210.2,157.0 231.3,150.4 252.4,148.2 273.6,155.9 284.1,166.7" class="s-club"/><polyline points="41.2,194.2 83.4,159.8 125.7,165.1 167.9,157.4 210.2,155.0 252.4,124.7" class="s-aysa"/><polyline points="41.2,162.5 83.4,175.7 125.7,188.9 167.9,187.8 210.2,174.6 252.4,168.0 294.7,162.5 336.9,170.2 379.2,164.7 421.4,147.1 463.7,137.2 505.9,147.1 548.2,146.0 590.4,152.6 632.7,158.1 674.9,163.6" class="s-wg"/><polyline points="287.5,166.9 294.7,162.5 336.9,165.8 379.2,164.7 421.4,149.3 463.7,139.4 505.9,148.2 548.2,147.1 590.4,152.6 632.7,158.1 674.9,163.6" class="s-ap"/><circle cx="336.9" cy="165.8" r="3.5" class="dot-ap"/><text x="336.9" y="157.8" class="lbl-ap" text-anchor="middle">6</text><circle cx="421.4" cy="149.3" r="3.5" class="dot-ap"/><text x="421.4" y="141.3" class="lbl-ap" text-anchor="middle">8</text><circle cx="505.9" cy="148.2" r="3.5" class="dot-ap"/><text x="505.9" y="140.2" class="lbl-ap" text-anchor="middle">8</text><circle cx="590.4" cy="152.6" r="3.5" class="dot-ap"/><text x="590.4" y="144.6" class="lbl-ap" text-anchor="middle">7</text><circle cx="674.9" cy="163.6" r="3.5" class="dot-ap"/><text x="674.9" y="155.6" class="lbl-ap" text-anchor="middle">6</text></svg><div class="legend"><span class="lg"><i class="s-club"></i>Club Náutico</span><span class="lg"><i class="s-aysa"></i>AySA Palermo</span><span class="lg"><i class="s-wg"></i>Windguru</span><span class="lg"><i class="s-ap"></i>Nuestra apuesta</span></div></section>
+
+<div class="two"><section><h2>Agua</h2><div class="kv"><b>0.65 m</b><span class="down">↓ 18 cm/h</span></div><div class="muted">bajando · AySA Palermo 16:00</div></section><section><h2>Virazón esta tarde</h2><div class="kv"><b>Floja</b><span>25%</span></div><div class="muted">aire 25° / agua 20° · nubes 61%</div></section></div>
+
+<section><h2>Pronóstico Windguru · GFS 13 km</h2><div class="fcs"><div class="fc"><div class="fc-h">hoy 19h</div><div class="fc-v">6</div><div class="fc-s">ráf 11 · SE</div></div><div class="fc"><div class="fc-h">hoy 21h</div><div class="fc-v">9</div><div class="fc-s">ráf 16 · E</div></div><div class="fc"><div class="fc-h">hoy 23h</div><div class="fc-v">8</div><div class="fc-s">ráf 16 · E</div></div><div class="fc"><div class="fc-h">mar 01h</div><div class="fc-v">7</div><div class="fc-s">ráf 14 · E</div></div><div class="fc"><div class="fc-h">mar 10h</div><div class="fc-v">11</div><div class="fc-s">ráf 16 · E</div></div><div class="fc good"><div class="fc-h">mar 13h</div><div class="fc-v">12</div><div class="fc-s">ráf 17 · E</div></div><div class="fc"><div class="fc-h">mar 16h</div><div class="fc-v">11</div><div class="fc-s">ráf 14 · ESE</div></div><div class="fc"><div class="fc-h">mar 19h</div><div class="fc-v">11</div><div class="fc-s">ráf 18 · ESE</div></div></div></section>
+
+<section><details><summary>Últimas 24 h</summary><div class="wrap"><table><tr><th>Hora</th><th>Club</th><th>Ráf</th><th>Norden</th>
+<th>Agua m</th><th>Windguru</th><th>Apuesta +3h</th><th>Prob SE</th></tr><tr><td>16:49</td><td>6.1</td><td>7.1</td><td>1.0</td><td>0.65</td><td>6.5</td><td>6.3</td><td>17</td></tr><tr><td>15:47</td><td>8.2</td><td>9.2</td><td>1.0</td><td>0.83</td><td>6.0</td><td>6.7</td><td>17</td></tr><tr><td>13:04</td><td>3.8</td><td>4.5</td><td>–</td><td>0.85</td><td>0.8</td><td>4.7</td><td>17</td></tr><tr><td>12:59</td><td>5.0</td><td>5.8</td><td>–</td><td>0.85</td><td>0.8</td><td>3.7</td><td>17</td></tr><tr><td>12:57</td><td>5.2</td><td>6.5</td><td>–</td><td>0.85</td><td>0.8</td><td>3.7</td><td>17</td></tr><tr><td>12:55</td><td>5.2</td><td>6.5</td><td>–</td><td>0.85</td><td>0.8</td><td>3.7</td><td>17</td></tr><tr><td>12:40</td><td>5.5</td><td>7.1</td><td>–</td><td>0.85</td><td>0.8</td><td>3.8</td><td>17</td></tr></table></div></details></section>
+
+<section><h2>Fuentes</h2><ul class="src"><li><span class="dotst ok"></span>Club Náutico (Windguru)<span class="muted"> · 16:45</span></li><li><span class="dotst ok"></span>Pilote Norden (CARP)<span class="muted"> · 14:12 · publica con ~1,5 h de demora</span></li><li><span class="dotst ok"></span>AySA Palermo<span class="muted"> · 16:00</span></li><li><span class="dotst ok"></span>Windguru GFS 13 km<span class="muted"> · 16:49 · corrida 2026110212</span></li></ul></section>
+
+<footer><b>Cómo calculamos la apuesta:</b> partimos del pronóstico de Windguru, le sumamos el viento del sur/sudeste que
+entra por Pilote Norden (llega al club unas 2 h después) y el empuje de la virazón en las tardes de sol, y la pegamos al
+viento medido en el club en las primeras horas. Es un modelo propio en calibración: cada medición queda guardada para ajustarlo.
+<br>Datos de terceros, sin garantía. Ante la duda, mirá el río y las condiciones antes de salir.</footer>
+</main>
+<script>
+(function(){var el=document.getElementById('ago'),live=document.getElementById('live');
+function f(){var m=Math.round((Date.now()-new Date(el.dataset.t))/60000);
+el.textContent=m<1?'actualizado recién':m<60?'actualizado hace '+m+' min':'actualizado hace '+Math.floor(m/60)+' h '+(m%60)+' min';
+live.classList.toggle('stale',m>40);}f();setInterval(f,30000);})();
+</script></body></html>
