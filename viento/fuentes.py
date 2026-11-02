@@ -115,7 +115,11 @@ def _bundle_con_intermedio(host):
     from cryptography.hazmat.primitives.serialization import Encoding
     from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-    pem = ssl.get_server_certificate((host, 443))
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE  # solo para leer el certificado y saber donde esta el intermedio
+    ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+    pem = ssl.get_server_certificate((host, 443), ssl_context=ctx)
     hoja = x509.load_pem_x509_certificate(pem.encode())
     aia = hoja.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
     urls = [d.access_location.value for d in aia if d.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
@@ -133,14 +137,26 @@ def _bundle_con_intermedio(host):
     return ruta
 
 
+class _AdaptadorCARP(requests.adapters.HTTPAdapter):
+    """El servidor de la CARP usa una clave DH chica: bajamos el nivel de seguridad de cifrado a 1,
+    pero se sigue verificando el certificado con el bundle (certifi + intermedio)."""
+
+    def __init__(self, cafile, **kw):
+        import ssl
+        self._ctx = ssl.create_default_context(cafile=cafile)
+        self._ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+        super().__init__(**kw)
+
+    def init_poolmanager(self, *a, **kw):
+        kw["ssl_context"] = self._ctx
+        return super().init_poolmanager(*a, **kw)
+
+
 def norden(id_estacion=2):
     """Viento (velocidad, rafaga, direccion) y marea de Pilote Norden."""
     try:
         s = requests.Session()
-        try:
-            requests.get(CARP + "/favicon.ico", timeout=TIMEOUT)
-        except requests.exceptions.SSLError:
-            s.verify = _bundle_con_intermedio("meteo.comisionriodelaplata.org")
+        s.mount(CARP, _AdaptadorCARP(_bundle_con_intermedio("meteo.comisionriodelaplata.org")))
         s.headers.update({"User-Agent": UA,
                           "Referer": "https://www.comisionriodelaplata.org/"})
         s.get(CARP + "/", params={"w": 900, "h": 450, "lang": "ES"}, timeout=TIMEOUT)
