@@ -118,7 +118,8 @@ def main():
             d_antes = A.media_angular([p["dir"] for p in s[-5:-3]])
             if (d_ahora is not None and d_antes is not None
                     and A.dif_angulo(d_ahora, d_antes) >= cfg["rotacion_grados"]
-                    and club["kn"] >= cfg["rotacion_min_kn"] and puede(est, "rotacion", t0, 2)):
+                    and club["kn"] >= cfg["rotacion_min_kn"] and puede(est, "rotacion", t0, 2)
+                    and cfg.get("alertar_rotacion", True)):
                 alertas.append(("rotacion", f"<b>Rotó el viento en el club</b>: de {A.punto(d_antes)} a "
                                             f"{A.punto(d_ahora)} ({club['kn']:.0f} kn)."))
     if cfg.get("alertar_cambio_marea") and agua and agua["cmh_prev"] is not None:
@@ -187,7 +188,7 @@ def main():
     silencio = en_silencio(t0, cfg)
     if silencio:
         alertas = []
-    resumen = (not silencio and t0.hour >= cfg["resumen_diario_hora"]
+    resumen = (cfg.get("resumen_diario", True) and not silencio and t0.hour >= cfg["resumen_diario_hora"]
                and est.get("resumen") != t0.date().isoformat())
 
     # ---- armar y mandar
