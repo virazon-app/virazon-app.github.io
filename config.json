@@ -2,6 +2,7 @@
   "_nota": "Podes cambiar estos numeros desde GitHub (boton del lapiz). Nudos = kn.",
   "umbral_salir_kn": 12,
   "umbral_bajo_kn": 8,
+  "prob_alerta": 50,
   "norden": {
     "sector_se_desde": 100,
     "sector_se_hasta": 170,
