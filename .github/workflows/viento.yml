@@ -2,7 +2,7 @@ name: Viento San Isidro
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # cada 15 minutos (GitHub a veces se demora unos minutos)
+    - cron: "7,22,37,52 * * * *"   # cada 15 min, en minutos "raros" (GitHub se saltea menos)
   workflow_dispatch: {}       # boton "Run workflow" para probar a mano
 
 permissions:
