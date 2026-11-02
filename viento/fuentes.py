@@ -102,6 +102,16 @@ def _tabla_ultima(html):
     return [re.sub(r"<[^>]+>", "", c).strip() for c in celdas]
 
 
+def _ctx_viejo(ctx):
+    """Acepta la configuracion TLS vieja del servidor de la CARP (clave DH chica, firmas SHA1).
+    El certificado se sigue verificando contra las CAs."""
+    import ssl
+    ctx.set_ciphers("DEFAULT:@SECLEVEL=0")
+    ctx.minimum_version = ssl.TLSVersion.TLSv1
+    ctx.options |= getattr(ssl, "OP_LEGACY_SERVER_CONNECT", 0x4)
+    return ctx
+
+
 def _bundle_con_intermedio(host):
     """El servidor de la CARP no manda el certificado intermedio (los navegadores lo buscan solos).
     Lo bajamos de la direccion que indica su propio certificado (AIA) y armamos un bundle de CAs
@@ -115,10 +125,9 @@ def _bundle_con_intermedio(host):
     from cryptography.hazmat.primitives.serialization import Encoding
     from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-    ctx = ssl.create_default_context()
+    ctx = _ctx_viejo(ssl.create_default_context())
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE  # solo para leer el certificado y saber donde esta el intermedio
-    ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
     import socket
     with socket.create_connection((host, 443), timeout=TIMEOUT) as sock:
         with ctx.wrap_socket(sock, server_hostname=host) as tls:
@@ -146,8 +155,7 @@ class _AdaptadorCARP(requests.adapters.HTTPAdapter):
 
     def __init__(self, cafile, **kw):
         import ssl
-        self._ctx = ssl.create_default_context(cafile=cafile)
-        self._ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+        self._ctx = _ctx_viejo(ssl.create_default_context(cafile=cafile))
         super().__init__(**kw)
 
     def init_poolmanager(self, *a, **kw):
