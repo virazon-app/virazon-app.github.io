@@ -224,3 +224,72 @@ def tendencia_txt(cmh):
     if abs(cmh) < 2:
         return "quieta"
     return "subiendo" if cmh > 0 else "bajando"
+
+
+# ------------------------------------------------------------------ Apuesta por dia (manana y siguientes)
+def apuesta_dia(pron, cfg, t0, dia):
+    """Nuestra apuesta para navegar un dia futuro (8 a 20 h). Para dias futuros no hay Norden, asi que
+    se parte de Windguru y se ajusta con lo que sabemos del rio: el E/SE entra mas de lo que dice el
+    modelo y la virazon empuja en las tardes de sol. La banda se agranda cuanto mas lejos es el dia."""
+    if not pron:
+        return None
+    vir = virazon(pron, cfg, dia)
+    extra_se = cfg.get("manana_extra_se", 0.15)  # +15% si el modelo da E/SE
+    horas = []
+    for h in pron["horas"]:
+        if h["t"].date() != dia or not 8 <= h["t"].hour <= 20 or h["kn"] is None:
+            continue
+        v = h["kn"]
+        if en_sector(h["dir"], 70, 170):
+            v *= 1 + extra_se
+        if vir.get("pct") and 13 <= h["t"].hour <= 18:
+            v += cfg["virazon_extra_kn"] * vir["pct"] / 100
+        horas.append({"t": h["t"], "kn": round(v, 1), "wg": h["kn"], "raf": h["raf"], "dir": h["dir"]})
+    if len(horas) < 2:
+        return None
+    umbral = cfg["umbral_salir_kn"]
+    ven = _bloque(horas, umbral)
+    if ven["kn"] >= umbral:
+        veredicto, clase = "Da para salir", "go"
+    elif ven["kn"] >= umbral - 3:
+        veredicto, clase = "Justo", "maybe"
+    else:
+        veredicto, clase = "No da", "nogo"
+    dias = (dia - t0.date()).days
+    banda = 2.5 + 0.5 * (dias - 1)
+    d_ven = media_angular([p["dir"] for p in horas if ven["desde"] <= p["t"] <= ven["hasta"]])
+    return {"dia": dia, "dias": dias, "horas": horas, "ventana": ven, "veredicto": veredicto, "clase": clase,
+            "dir": d_ven, "vir": vir, "lo": max(0, round(ven["kn"] - banda)), "hi": round(ven["kn"] + banda)}
+
+
+def _bloque(horas, umbral):
+    """La ventana mas larga de horas seguidas con buen viento (cerca del maximo del dia)."""
+    mx = max(p["kn"] for p in horas)
+    thr = min(umbral, mx - 1)
+    mejor, actual = [], []
+    for p in horas:
+        if p["kn"] >= thr:
+            actual.append(p)
+            if len(actual) > len(mejor) or (len(actual) == len(mejor) and sum(x["kn"] for x in actual) > sum(x["kn"] for x in mejor)):
+                mejor = list(actual)
+        else:
+            actual = []
+    kn = round(sum(p["kn"] for p in mejor) / len(mejor))
+    wg = [p["wg"] for p in mejor]
+    return {"kn": kn, "lo": kn - 2, "hi": kn + 2, "desde": mejor[0]["t"], "hasta": mejor[-1]["t"],
+            "wg_lo": round(min(wg)), "wg_hi": round(max(wg)), "max": round(mx)}
+
+
+def proximos_dias(pron, cfg, t0, n=7):
+    out = []
+    for k in range(1, n + 1):
+        a = apuesta_dia(pron, cfg, t0, t0.date() + timedelta(days=k))
+        if a:
+            out.append(a)
+    return out
+
+
+def mejor_dia(dias):
+    if not dias:
+        return None
+    return max(dias, key=lambda a: (a["ventana"]["kn"], -a["dias"]))

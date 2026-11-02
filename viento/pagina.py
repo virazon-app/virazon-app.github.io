@@ -100,6 +100,68 @@ def svg_grafico(t0, club, nor, ays, pron, ap, umbral, w=720, h=260):
             f'<div class="legend">{leyenda}</div>')
 
 
+
+NOMBRE_DIA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+
+def nombre_dia(a):
+    return "Mañana" if a["dias"] == 1 else NOMBRE_DIA[a["dia"].weekday()]
+
+
+def svg_barras(horas, umbral, w=720, h=150):
+    padl, padb, padt = 4, 22, 18
+    n = len(horas)
+    ymax = max(umbral + 4, max(p["kn"] for p in horas) * 1.15)
+    bw = (w - padl * 2) / n
+    g = [f'<line x1="0" x2="{w}" y1="{padt + (1-umbral/ymax)*(h-padt-padb):.1f}" '
+         f'y2="{padt + (1-umbral/ymax)*(h-padt-padb):.1f}" class="umbral"/>']
+    for i, p in enumerate(horas):
+        x = padl + i * bw
+        bh = p["kn"] / ymax * (h - padt - padb)
+        y = h - padb - bh
+        cls = "b-go" if p["kn"] >= umbral else ("b-maybe" if p["kn"] >= umbral - 3 else "b-no")
+        wy = h - padb - p["wg"] / ymax * (h - padt - padb)
+        g.append(f'<rect x="{x+3:.1f}" y="{y:.1f}" width="{bw-6:.1f}" height="{bh:.1f}" rx="4" class="{cls}"/>'
+                 f'<line x1="{x+3:.1f}" x2="{x+bw-3:.1f}" y1="{wy:.1f}" y2="{wy:.1f}" class="b-wg"/>'
+                 f'<text x="{x+bw/2:.1f}" y="{y-5:.1f}" class="b-v" text-anchor="middle">{p["kn"]:.0f}</text>'
+                 f'<text x="{x+bw/2:.1f}" y="{h-6}" class="ax" text-anchor="middle">{p["t"]:%H}</text>')
+    return f'<svg viewBox="0 0 {w} {h}" class="chart" role="img" aria-label="apuesta por hora">{"".join(g)}</svg>'
+
+
+def html_manana(prox, umbral):
+    if not prox:
+        return ""
+    a = prox[0]
+    v = a["ventana"]
+    wg = [p["wg"] for p in a["horas"] if v["desde"] <= p["t"] <= v["hasta"]]
+    wg_txt = f"{min(wg):.0f}–{max(wg):.0f}" if wg and round(min(wg)) != round(max(wg)) else f"{wg[0]:.0f}" if wg else "–"
+    return (f'<section class="tomorrow"><h2>Nuestra apuesta para navegar · {nombre_dia(a).lower()} {a["dia"].day}/{a["dia"].month}</h2>'
+            f'<div class="tm-top"><div class="big">{v["kn"]}<span> kn</span></div><div>'
+            f'<span class="pill {a["clase"]}">{a["veredicto"]}</span>'
+            f'<div class="rng">{a["lo"]}–{a["hi"]} kn · {horas_txt(v["desde"], v["hasta"])} · del {punto(a["dir"])}</div>'
+            f'<div class="wg">Windguru dice {wg_txt} kn · virazón {E(a["vir"]["nivel"])}</div></div></div>'
+            f'{svg_barras(a["horas"], umbral)}'
+            f'<div class="legend"><span class="lg"><i class="s-ap"></i>Nuestra apuesta por hora</span>'
+            f'<span class="lg"><i class="s-wg"></i>Windguru</span><span class="lg"><i class="umb"></i>{umbral} kn para salir</span></div>'
+            f'</section>')
+
+
+def html_semana(prox, mejor):
+    if not prox:
+        return ""
+    cards = ""
+    for a in prox:
+        v = a["ventana"]
+        es_mejor = mejor is not None and a["dia"] == mejor["dia"] and v["kn"] >= 1
+        cards += (f'<div class="day {a["clase"]}{" best" if es_mejor else ""}">'
+                  + ('<div class="badge">Mejor día</div>' if es_mejor else "")
+                  + f'<div class="d-n">{nombre_dia(a)}</div><div class="d-d">{a["dia"].day}/{a["dia"].month}</div>'
+                  f'<div class="d-v">{v["kn"]}<span> kn</span></div>'
+                  f'<div class="d-s">{horas_txt(v["desde"], v["hasta"])}</div><div class="d-s">{punto(a["dir"])}</div></div>')
+    return (f'<section><h2>¿Qué día está bueno para navegar?</h2><div class="week">{cards}</div>'
+            f'<div class="muted" style="margin-top:8px">Cuanto más lejos el día, menos precisa la apuesta.</div></section>')
+
+
 # ------------------------------------------------------------------ pagina
 def _fuente(nombre, t, t0, max_min, detalle=""):
     if t is None:
@@ -112,6 +174,15 @@ def armar(docs: Path, d, alertas, hist_csv: Path):
     docs.mkdir(exist_ok=True)
     t0, club, nor, ays, pron, ap = d["t0"], d["club"], d["nor"], d["ays"], d["pron"], d["ap"]
     ven, prob, items, vir, agua, umbral = d["ventana"], d["prob"], d["items"], d["vir"], d["agua"], d["umbral"]
+    prox, mejor = d.get("prox") or [], d.get("mejor")
+    if mejor and mejor["ventana"]["kn"] >= umbral - 3:
+        mv = mejor["ventana"]
+        mejor_txt = (f'<a class="bestline {mejor["clase"]}" href="#semana">Mejor día para navegar: <b>{nombre_dia(mejor).lower()} '
+                     f'{mejor["dia"].day}/{mejor["dia"].month}</b> · {mv["kn"]} kn {horas_txt(mv["desde"], mv["hasta"])}</a>')
+    elif prox:
+        mejor_txt = '<div class="bestline nogo">Por ahora ningún día de la semana da para salir</div>'
+    else:
+        mejor_txt = ""
 
     # Apuesta
     if ven:
@@ -201,6 +272,7 @@ def armar(docs: Path, d, alertas, hist_csv: Path):
         avisos=(f'<section class="alert"><b>Aviso</b><ul>{avisos_html}</ul></section>' if alertas else ""),
         estaciones=est_html, prob=prob, prob_w=max(3, prob), razones=razones, umbral=umbral,
         grafico=svg_grafico(t0, club, nor, ays, pron, ap, umbral), agua=agua_html, vir=vir_html,
+        mejor=mejor_txt, manana=html_manana(prox, umbral), semana=html_semana(prox, mejor),
         pron=pron_html, modelo=E(pron["modelo"] if pron else "Windguru"), tabla=tabla, fuentes=fuentes_html)
     (docs / "index.html").write_text(page, encoding="utf-8")
 
@@ -269,10 +341,26 @@ details summary{cursor:pointer;color:var(--muted);font-weight:600}
 th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
 ul.src{list-style:none;padding:0;margin:0}ul.src li{padding:4px 0}
 .dotst{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}.dotst.ok{background:var(--go)}.dotst.bad{background:#f87171}
+.bestline{display:block;text-decoration:none;color:var(--txt);border-radius:12px;padding:11px 14px;margin:12px 0;font-size:15px;
+border:1px solid var(--line);background:var(--card)}.bestline.go{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.08)}
+.bestline.maybe{border-color:rgba(245,179,1,.45);background:rgba(245,179,1,.07)}.bestline.nogo{color:var(--muted)}
+.tomorrow{background:linear-gradient(135deg,#102c4f,#0b1d36)}.tm-top{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;margin-bottom:8px}
+.tomorrow .rng{font-size:16px;font-weight:600}.tomorrow .wg{color:var(--muted);font-size:14px}
+.b-go{fill:var(--go)}.b-maybe{fill:var(--maybe)}.b-no{fill:#3b5578}.b-wg{stroke:var(--wg);stroke-width:2.5}
+.b-v{fill:var(--txt);font-size:12px;font-weight:700}.umbral{stroke:var(--go);stroke-dasharray:5 5;opacity:.6}
+.lg i.umb{background:var(--go);opacity:.6}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{position:relative;background:var(--card2);border-radius:12px;padding:12px 6px 10px;text-align:center;border:1.5px solid transparent}
+.day.go{border-color:rgba(34,197,94,.55)}.day.maybe{border-color:rgba(245,179,1,.45)}.day.best{box-shadow:0 0 0 2px var(--accent)}
+.badge{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#04201c;font-size:10.5px;
+font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.d-n{font-weight:700;font-size:13px}.d-d{color:var(--muted);font-size:11.5px}.d-v{font-size:24px;font-weight:800;margin-top:4px}
+.d-v span{font-size:12px;color:var(--muted)}.day.go .d-v{color:var(--go)}.day.maybe .d-v{color:var(--maybe)}.d-s{color:var(--muted);font-size:11.5px}
 footer{color:var(--muted);font-size:12.5px;margin-top:18px;line-height:1.6}
 @media (max-width:640px){.big{font-size:52px}.stations{grid-template-columns:repeat(3,1fr);gap:6px}.st{padding:8px 4px}
 .st-v{font-size:20px}.prob{grid-template-columns:1fr}.two{grid-template-columns:1fr}.fcs{grid-template-columns:repeat(4,1fr)}
-.hero{grid-template-columns:1fr}.st-v small{display:block}
+.hero{grid-template-columns:1fr}.tm-top{grid-template-columns:1fr}
+.week{grid-template-columns:repeat(4,1fr);gap:10px 6px}.b-v{font-size:20px}.st-v small{display:block}
 .ax{font-size:20px}.lbl-ap{font-size:22px}.live{font-size:12px}header{align-items:flex-start}}
 """
 
@@ -293,7 +381,8 @@ PLANTILLA = """<!doctype html>
 <div class="live" id="live"><span class="pulse"></span><span id="ago" data-t="{iso}">{hora}</span></div></header>
 
 <section class="hero"><div class="big">{ap_big}<span> kn</span></div>
-<div><span class="pill {clase_estado}">{estado}</span><div class="rng">Nuestra apuesta: {ap_rng}</div><div class="wg">{ap_wg}</div></div></section>
+<div><span class="pill {clase_estado}">{estado}</span><div class="rng">Nuestra apuesta hoy: {ap_rng}</div><div class="wg">{ap_wg}</div></div></section>
+{mejor}
 {avisos}
 <section><h2>Ahora</h2><div class="stations">{estaciones}</div></section>
 
@@ -301,6 +390,9 @@ PLANTILLA = """<!doctype html>
 <div class="bar"><i style="width:{prob_w}%"></i></div></div><ul class="why">{razones}</ul></section>
 
 <section><h2>Viento (kn) · medido, Windguru y nuestra apuesta</h2>{grafico}</section>
+
+{manana}
+<div id="semana">{semana}</div>
 
 <div class="two"><section><h2>Agua</h2>{agua}</section><section><h2>Virazón esta tarde</h2>{vir}</section></div>
 

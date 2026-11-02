@@ -138,7 +138,8 @@ def main():
 
     # ---- armar y mandar
     banner = alertas[0][1].split("</b>")[0].replace("<b>", "") if alertas else None
-    datos_vista = {"t0": t0, "club": club, "nor": nor, "ays": ays, "pron": pron, "ap": ap,
+    prox = A.proximos_dias(pron, cfg, t0)
+    datos_vista = {"prox": prox, "mejor": A.mejor_dia(prox), "t0": t0, "club": club, "nor": nor, "ays": ays, "pron": pron, "ap": ap,
                    "ventana": ven, "prob": prob, "items": items, "vir": vir, "agua": agua,
                    "banner": banner, "umbral": umbral}
     imagen.armar(IMG, datos_vista)  # la imagen es la que se manda por Telegram
