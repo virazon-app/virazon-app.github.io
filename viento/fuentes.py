@@ -119,8 +119,11 @@ def _bundle_con_intermedio(host):
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE  # solo para leer el certificado y saber donde esta el intermedio
     ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
-    pem = ssl.get_server_certificate((host, 443), ssl_context=ctx)
-    hoja = x509.load_pem_x509_certificate(pem.encode())
+    import socket
+    with socket.create_connection((host, 443), timeout=TIMEOUT) as sock:
+        with ctx.wrap_socket(sock, server_hostname=host) as tls:
+            der = tls.getpeercert(binary_form=True)
+    hoja = x509.load_der_x509_certificate(der)
     aia = hoja.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
     urls = [d.access_location.value for d in aia if d.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
     inter = []
