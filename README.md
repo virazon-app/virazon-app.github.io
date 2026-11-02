@@ -1,8 +1,8 @@
-# Viento San Isidro
+# Virazón
 
 Página de viento para el Club Náutico San Isidro, con alertas opcionales por Telegram. Se actualiza sola cada 15 minutos en GitHub, gratis.
 
-**La página:** `https://marcosoconnor24-blip.github.io/viento-san-isidro/`
+**La página:** `https://virazon-app.github.io/`
 
 **Qué mira:**
 
