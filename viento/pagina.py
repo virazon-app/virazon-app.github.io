@@ -422,6 +422,8 @@ section a{color:var(--accent)}
 .rb i{display:block;width:100%;border-radius:3px 3px 0 0}.r-off{background:#1c3456}.r-on{background:#60a5fa}.r-hi{background:#2563eb}
 .rv{font-size:10px;color:#93c5fd;height:13px}.rh{font-size:10px;color:var(--muted);margin-top:3px}
 .radar{padding-top:62%}.rain-warn{color:#93c5fd}.d-r{color:#93c5fd;font-size:11.5px;margin-top:2px}
+.hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.tg{background:#229ED9;color:#fff !important;text-decoration:none;font-weight:700;font-size:13px;padding:7px 12px;border-radius:999px;white-space:nowrap}
 footer{color:var(--muted);font-size:12.5px;margin-top:18px;line-height:1.6}
 @media (max-width:640px){.big{font-size:52px}.stations{grid-template-columns:repeat(3,1fr);gap:6px}.st{padding:8px 4px}
 .st-v{font-size:20px}.prob{grid-template-columns:1fr}.two{grid-template-columns:1fr}.fcs{grid-template-columns:repeat(4,1fr)}
@@ -444,7 +446,8 @@ PLANTILLA = """<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Virazón">
 <style>{css}</style></head><body><main>
 <header><div class="brand"><img src="{favicon}" alt=""><div><h1>Virazón</h1><small>Náutico San Isidro · Río de la Plata</small></div></div>
-<div class="live" id="live"><span class="pulse"></span><span id="ago" data-t="{iso}">{hora}</span></div></header>
+<div class="hdr-r"><a class="tg" href="https://t.me/virazon_alertas" target="_blank" rel="noopener">🔔 Alertas en Telegram</a>
+<div class="live" id="live"><span class="pulse"></span><span id="ago" data-t="{iso}">{hora}</span></div></div></header>
 
 <section class="hero"><div class="big">{ap_big}<span> kn</span></div>
 <div><span class="pill {clase_estado}">{estado}</span><div class="rng">Nuestra apuesta hoy: {ap_rng}</div><div class="wg">{ap_wg}</div></div></section>

@@ -157,6 +157,11 @@ def main():
                + f"\nProb. SE ≥{umbral} kn próx. 3 h: {prob}%")
     if chat:
         try:
+            if str(chat).startswith("@") and est.get("canal_ok") != str(chat):
+                telegram.foto(chat, IMG, "<b>Virazón Alertas está activo.</b>\nAcá vas a recibir los avisos de viento, "
+                                         "SE en Pilote Norden, lluvia y el resumen de cada mañana.\n"
+                                         "Tablero completo: https://virazon-app.github.io" + pie)
+                est["canal_ok"] = str(chat)
             for p in pedidos:
                 if p.startswith("/start"):
                     telegram.texto(chat, "Listo, quedaste registrado. " + AYUDA)
