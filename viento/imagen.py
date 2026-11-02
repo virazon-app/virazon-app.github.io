@@ -57,7 +57,7 @@ def armar(path, d):
     def card(x, y, w, h, c=CARD):
         bg.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.004,rounding_size=0.012", fc=c, ec="none"))
 
-    fig.text(0.05, 0.980, "VIENTO · Náutico San Isidro", fontsize=26, weight="bold", va="top")
+    fig.text(0.05, 0.980, "VIRAZÓN · Náutico San Isidro", fontsize=26, weight="bold", va="top")
     fig.text(0.05, 0.952, f"{DIAS[t0.weekday()]} {t0.day}/{t0.month} · {_hhmm(t0)}", fontsize=14, color=MUTED, va="top", weight="bold")
 
     # Banner con la apuesta

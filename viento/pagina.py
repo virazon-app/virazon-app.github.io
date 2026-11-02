@@ -33,7 +33,7 @@ def armar(docs: Path, t0, ven, prob, alertas, hist_csv: Path, umbral):
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="300">
-<title>Viento San Isidro</title>
+<title>Virazón</title>
 <style>
 :root{{--bg:#0f172a;--card:#1e293b;--txt:#e2e8f0;--muted:#94a3b8;--yel:#eab308;--green:#22c55e}}
 body{{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}}
@@ -46,7 +46,7 @@ ul{{margin:6px 0;padding-left:20px}} img{{width:100%;border-radius:14px;display:
 .wrap{{overflow-x:auto}} table{{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}}
 th,td{{padding:5px 7px;text-align:right;border-bottom:1px solid #334155}} th{{color:var(--muted);font-weight:600}}
 </style></head><body><main>
-<h1>Viento · Náutico San Isidro</h1>
+<h1>Virazón · Náutico San Isidro</h1>
 <div class="muted">Actualizado {t0:%d/%m %H:%M} · se refresca solo cada 5 min (los datos, cada 15)</div>
 <div class="apuesta">Nuestra apuesta: <b>{apuesta}</b><br>{wg} · prob. SE ≥{umbral} kn próx. 3 h: {prob}%</div>
 <div class="card"><b>Avisos</b><ul>{avisos}</ul></div>
