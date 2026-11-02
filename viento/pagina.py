@@ -162,6 +162,27 @@ def html_semana(prox, mejor):
             f'<div class="muted" style="margin-top:8px">Cuanto más lejos el día, menos precisa la apuesta.</div></section>')
 
 
+CAMARAS = [  # de norte a sur; id de Windy Webcams
+    (1735938641, "Náutico San Isidro", "mirando al este"),
+    (1793908523, "Acassuso · La Pocho Bay", "mirando al noreste"),
+    (1601563134, "Martínez · Río de la Plata", "mirando al sudeste"),
+    (1745449788, "La Lucila · Paseo del Viento", "mirando al noroeste"),
+    (1577126865, "Olivos", "mirando al norte"),
+]
+
+
+def html_camaras():
+    cams = "".join(
+        f'<figure class="cam{" cam-main" if i == 0 else ""}"><div class="cam-f">'
+        f'<iframe src="https://webcams.windy.com/webcams/public/embed/player/{cid}/day" loading="lazy" '
+        f'title="Cámara {E(n)}" allowfullscreen></iframe></div>'
+        f'<figcaption><b>{E(n)}</b> · {E(d)}</figcaption></figure>'
+        for i, (cid, n, d) in enumerate(CAMARAS))
+    return (f'<section id="camaras"><h2>Cámaras del río</h2><div class="cams">{cams}</div>'
+            f'<div class="muted" style="margin-top:8px">Cámaras vía <a href="https://www.windy.com/-Webcams/webcams" '
+            f'target="_blank" rel="noopener">Windy.com</a>. Muestran una foto cada pocos minutos y el timelapse de las últimas 24 h.</div></section>')
+
+
 # ------------------------------------------------------------------ pagina
 def _fuente(nombre, t, t0, max_min, detalle=""):
     if t is None:
@@ -272,7 +293,7 @@ def armar(docs: Path, d, alertas, hist_csv: Path):
         avisos=(f'<section class="alert"><b>Aviso</b><ul>{avisos_html}</ul></section>' if alertas else ""),
         estaciones=est_html, prob=prob, prob_w=max(3, prob), razones=razones, umbral=umbral,
         grafico=svg_grafico(t0, club, nor, ays, pron, ap, umbral), agua=agua_html, vir=vir_html,
-        mejor=mejor_txt, manana=html_manana(prox, umbral), semana=html_semana(prox, mejor),
+        camaras=html_camaras(), mejor=mejor_txt, manana=html_manana(prox, umbral), semana=html_semana(prox, mejor),
         pron=pron_html, modelo=E(pron["modelo"] if pron else "Windguru"), tabla=tabla, fuentes=fuentes_html)
     (docs / "index.html").write_text(page, encoding="utf-8")
 
@@ -356,11 +377,16 @@ border:1px solid var(--line);background:var(--card)}.bestline.go{border-color:rg
 font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
 .d-n{font-weight:700;font-size:13px}.d-d{color:var(--muted);font-size:11.5px}.d-v{font-size:24px;font-weight:800;margin-top:4px}
 .d-v span{font-size:12px;color:var(--muted)}.day.go .d-v{color:var(--go)}.day.maybe .d-v{color:var(--maybe)}.d-s{color:var(--muted);font-size:11.5px}
+.cams{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cam{margin:0}.cam-main{grid-column:1/-1}
+.cam-f{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0a1830}
+.cam-f iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}figcaption b{color:var(--txt)}
+section a{color:var(--accent)}
 footer{color:var(--muted);font-size:12.5px;margin-top:18px;line-height:1.6}
 @media (max-width:640px){.big{font-size:52px}.stations{grid-template-columns:repeat(3,1fr);gap:6px}.st{padding:8px 4px}
 .st-v{font-size:20px}.prob{grid-template-columns:1fr}.two{grid-template-columns:1fr}.fcs{grid-template-columns:repeat(4,1fr)}
 .hero{grid-template-columns:1fr}.tm-top{grid-template-columns:1fr}
-.week{grid-template-columns:repeat(4,1fr);gap:10px 6px}.b-v{font-size:20px}.st-v small{display:block}
+.week{grid-template-columns:repeat(4,1fr);gap:10px 6px}.cams{grid-template-columns:1fr}.b-v{font-size:20px}.st-v small{display:block}
 .ax{font-size:20px}.lbl-ap{font-size:22px}.live{font-size:12px}header{align-items:flex-start}}
 """
 
@@ -385,6 +411,8 @@ PLANTILLA = """<!doctype html>
 {mejor}
 {avisos}
 <section><h2>Ahora</h2><div class="stations">{estaciones}</div></section>
+
+{camaras}
 
 <section class="prob"><div><div class="pnum">{prob}%</div><div class="muted">chance de SE ≥{umbral} kn en las próximas 3 h</div>
 <div class="bar"><i style="width:{prob_w}%"></i></div></div><ul class="why">{razones}</ul></section>
