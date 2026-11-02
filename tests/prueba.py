@@ -86,6 +86,9 @@ def fake_get(url, params=None, **kw):
 class FakeSession:
     headers = {}
 
+    def mount(self, *a, **k):
+        pass
+
     def get(self, *a, **k):
         return R({}, text="<html>ok</html>")
 
@@ -104,7 +107,8 @@ def main():
     os.environ["DRY_RUN"] = "1"
     with mock.patch.object(fuentes.requests, "get", fake_get), \
          mock.patch.object(fuentes.requests, "Session", FakeSession), \
-         mock.patch.object(fuentes, "ahora", lambda: T0):
+         mock.patch.object(fuentes, "ahora", lambda: T0), \
+         mock.patch.object(fuentes, "_bundle_con_intermedio", lambda host: None):
         app.main()
     print(open(d / "historial.csv").read())
 
